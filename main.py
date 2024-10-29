@@ -3,13 +3,15 @@ import tkinter as tk
 
 if __name__ == '__main__':
     def set_encrypt():
+        cipher_text = MyEncryption.encrypt(text_input.get(), key_input.get())
         text_input.delete(0, tk.END)
-        text_input.insert(0, MyEncryption.encrypt(text_input.get(), key_input.get()))
+        text_input.insert(0, cipher_text)
 
 
     def set_decrypt():
+        plain_text = MyEncryption.decrypt(text_input.get(), key_input.get())
         text_input.delete(0, tk.END)
-        text_input.insert(0, MyEncryption.decrypt(text_input.get(), key_input.get()))
+        text_input.insert(0, plain_text)
 
 
     window = tk.Tk()
