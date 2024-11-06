@@ -25,6 +25,8 @@ class ChatApp:
             self.client = MyClient(port=self.port, key=self.key)
             threading.Thread(target=self.client.start, args=(self,)).start()
 
+        self.window.protocol("WM_DELETE_WINDOW", self.on_closing)
+
     def setup_gui(self):
         self.chat_history = tk.Text(self.window, state='disabled', width=50, height=20)
         self.chat_history.pack(pady=10)
@@ -72,6 +74,17 @@ class ChatApp:
     def initialize_client_socket(self, sock):
         self.client.sock = sock
         self.append_message("Client: Connected to server.")
+
+    def on_closing(self):
+        if self.is_server:
+            self.server.running = False
+            if self.server.conn:
+                self.server.conn.close()
+        else:
+            self.client.running = False
+            if self.client.sock:
+                self.client.sock.close()
+        self.window.destroy()
 
 
 def start_chat_app(port, role):
