@@ -6,14 +6,14 @@ import threading
 
 
 class ChatApp:
-    def __init__(self, window, port, is_server):
+    def __init__(self, window, port, key, is_server):
         self.send_button = None
         self.message_entry = None
         self.chat_history = None
         self.window = window
         self.port = int(port)
         self.is_server = is_server
-        self.key = 3
+        self.key = int(key)
         self.conn = None
 
         self.setup_gui()
@@ -87,16 +87,17 @@ class ChatApp:
         self.window.destroy()
 
 
-def start_chat_app(port, role):
+def start_chat_app(port, key, role):
     try:
         port = int(port)
+        key = int(key)
     except ValueError:
-        print("Invalid port number. Please enter a valid integer.")
+        print("Invalid port number or key. Please enter valid integers.")
         return
 
     root = tk.Tk()
     root.title("Chat Application")
-    ChatApp(root, port, role == "server")
+    ChatApp(root, port, key, role == "server")
     root.mainloop()
 
 
@@ -110,10 +111,16 @@ def main():
     port_entry = tk.Entry(window)
     port_entry.pack(pady=5)
 
-    server_button = tk.Button(window, text="Run Server", command=lambda: start_chat_app(port_entry.get(), "server"))
+    tk.Label(window, text="Encryption Key:").pack(pady=5)
+    key_entry = tk.Entry(window)
+    key_entry.pack(pady=5)
+
+    server_button = tk.Button(window, text="Run Server",
+                              command=lambda: start_chat_app(port_entry.get(), key_entry.get(), "server"))
     server_button.pack(pady=5)
 
-    client_button = tk.Button(window, text="Run Client", command=lambda: start_chat_app(port_entry.get(), "client"))
+    client_button = tk.Button(window, text="Run Client",
+                              command=lambda: start_chat_app(port_entry.get(), key_entry.get(), "client"))
     client_button.pack(pady=5)
 
     window.mainloop()

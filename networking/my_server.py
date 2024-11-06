@@ -45,6 +45,6 @@ class MyServer:
                 while self.running:
                     pass
 
-                receiver_thread.join()
+                receiver_thread.join()  # Ensure the receiver thread finishes
                 print("Server shutdown")
                 chat_app.append_message("Server shutdown")
