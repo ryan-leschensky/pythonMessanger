@@ -25,4 +25,4 @@ Once you're done with this project, make sure to save your code since this helpe
 needed for a later activity.
 
 [main.py]: main.py
-[my_encryption.py]: my_encryption.py
+[my_encryption.py]: encryption/my_encryption.py

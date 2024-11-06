@@ -1,34 +1,110 @@
-from my_encryption import MyEncryption
+from encryption.my_encryption import MyEncryption
+from networking.my_server import MyServer
+from networking.my_client import MyClient
 import tkinter as tk
-
-if __name__ == '__main__':
-    def set_encrypt():
-        cipher_text = MyEncryption.encrypt(text_input.get(), key_input.get())
-        text_input.delete(0, tk.END)
-        text_input.insert(0, cipher_text)
+import threading
 
 
-    def set_decrypt():
-        plain_text = MyEncryption.decrypt(text_input.get(), key_input.get())
-        text_input.delete(0, tk.END)
-        text_input.insert(0, plain_text)
+class ChatApp:
+    def __init__(self, window, port, is_server):
+        self.send_button = None
+        self.message_entry = None
+        self.chat_history = None
+        self.window = window
+        self.port = int(port)
+        self.is_server = is_server
+        self.key = 3
+        self.conn = None
+
+        self.setup_gui()
+
+        if is_server:
+            self.server = MyServer(port=self.port, key=self.key)
+            threading.Thread(target=self.server.start, args=(self,)).start()
+        else:
+            self.client = MyClient(port=self.port, key=self.key)
+            threading.Thread(target=self.client.start, args=(self,)).start()
+
+    def setup_gui(self):
+        self.chat_history = tk.Text(self.window, state='disabled', width=50, height=20)
+        self.chat_history.pack(pady=10)
+
+        self.message_entry = tk.Entry(self.window, width=40)
+        self.message_entry.pack(side=tk.LEFT, padx=10)
+
+        self.send_button = tk.Button(self.window, text="Send", width=10, command=self.send_message)
+        self.send_button.pack(side=tk.RIGHT, padx=10)
+
+    def append_message(self, message):
+        self.chat_history.config(state='normal')
+        self.chat_history.insert(tk.END, message + '\n')
+        self.chat_history.config(state='disabled')
+        self.chat_history.yview(tk.END)
+
+    def send_message(self):
+        message = self.message_entry.get()
+        self.append_message(f"You: {message}")
+        self.message_entry.delete(0, tk.END)
+
+        try:
+            encrypted_message = MyEncryption.encrypt(message, self.key)
+            if self.is_server and self.conn:
+                self.conn.sendall(encrypted_message.encode())
+            elif self.client.sock:
+                self.client.sock.sendall(encrypted_message.encode())
+            else:
+                self.append_message("Connection not established yet.")
+        except AttributeError:
+            self.append_message("Connection not established yet.")
+        except Exception as e:
+            self.append_message(f"Error sending message: {e}")
+
+    def receive_message_server(self, decrypted_message):
+        self.append_message(f"Client: {decrypted_message}")
+
+    def receive_message_client(self, decrypted_message):
+        self.append_message(f"Server: {decrypted_message}")
+
+    def initialize_server_connection(self, conn):
+        self.conn = conn
+        self.append_message("Server: Connection established")
+
+    def initialize_client_socket(self, sock):
+        self.client.sock = sock
+        self.append_message("Client: Connected to server.")
 
 
+def start_chat_app(port, role):
+    try:
+        port = int(port)
+    except ValueError:
+        print("Invalid port number. Please enter a valid integer.")
+        return
+
+    root = tk.Tk()
+    root.title("Chat Application")
+    ChatApp(root, port, role == "server")
+    root.mainloop()
+
+
+def main():
     window = tk.Tk()
-    window.title("Text Encryptor")
+    window.title("Select Mode")
 
-    tk.Label(window, text="Text Input:").grid(row=0, column=0, padx=10, pady=10)
-    text_input = tk.Entry(window, width=30)
-    text_input.grid(row=0, column=1, padx=10, pady=10)
+    tk.Label(window, text="Select mode:").pack(pady=10)
 
-    tk.Label(window, text="Key:").grid(row=1, column=0, padx=10, pady=10)
-    key_input = tk.Entry(window, width=30)
-    key_input.grid(row=1, column=1, padx=10, pady=10)
+    tk.Label(window, text="Port:").pack(pady=5)
+    port_entry = tk.Entry(window)
+    port_entry.pack(pady=5)
 
-    encrypt_button = tk.Button(window, text="Encrypt", command=set_encrypt)
-    encrypt_button.grid(row=2, column=0, padx=10, pady=10, sticky="e")
+    server_button = tk.Button(window, text="Run Server", command=lambda: start_chat_app(port_entry.get(), "server"))
+    server_button.pack(pady=5)
 
-    decrypt_button = tk.Button(window, text="Decrypt", command=set_decrypt)
-    decrypt_button.grid(row=2, column=1, padx=10, pady=10, sticky="w")
+    client_button = tk.Button(window, text="Run Client", command=lambda: start_chat_app(port_entry.get(), "client"))
+    client_button.pack(pady=5)
 
     window.mainloop()
+
+
+if __name__ == '__main__':
+    main()
