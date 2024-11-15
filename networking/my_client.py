@@ -10,6 +10,7 @@ class MyClient:
         self.key = key
         self.sock = None
         self.running = False
+        self.receiver_thread = None
 
     def receive_messages(self, chat_app):
         try:
@@ -36,13 +37,12 @@ class MyClient:
                 print(f"Connected to {self.host}:{self.port}")
                 chat_app.initialize_client_socket(self.sock)
 
-                receiver_thread = Thread(target=self.receive_messages, args=(chat_app,))
-                receiver_thread.start()
+                self.receiver_thread = Thread(target=self.receive_messages, args=(chat_app,))
+                self.receiver_thread.start()
 
                 while self.running:
                     pass
 
-                receiver_thread.join()  # Ensure the receiver thread finishes
                 print("Client shutdown")
                 chat_app.append_message("Client shutdown")
             except ConnectionError as ce:
@@ -51,3 +51,9 @@ class MyClient:
                 print(f"Error: {e}")
             finally:
                 s.close()
+
+    def stop(self):
+        self.running = False
+        if self.receiver_thread:
+            self.receiver_thread.join()
+        print("Client stopped")
