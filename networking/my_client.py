@@ -4,7 +4,7 @@ from encryption.my_encryption import MyEncryption
 
 
 class MyClient:
-    def __init__(self, host='127.0.0.1', port=65432, key=3):
+    def __init__(self, host='10.110.33.22', port=65432, key=3):
         self.host = host
         self.port = port
         self.key = key
